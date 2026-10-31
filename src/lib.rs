@@ -4,6 +4,7 @@ pub mod banner_dismiss;
 pub mod config_window;
 pub mod data_table;
 pub mod egui_theme;
+pub mod gui_refresh;
 pub mod issues;
 pub mod launcher;
 pub mod order_amount_format;
@@ -29,6 +30,12 @@ pub use launcher::{
 pub use banner::FeedBanner;
 pub use banner_dismiss::{
     draw_dismissible_warning_row, with_dismiss_registry, BannerDismissRegistry,
+};
+pub use gui_refresh::{
+    chartboard_repaint_ms, klines_repaint_ms, live_repaint_ms, manual_probe_status_ms,
+    manual_probe_step_ms, orders_fast_poll_ms, portfolio_repaint_ms, schedule_gui_refresh,
+    schedule_gui_refresh_ms, statics_instrument_map_repaint_ms, supervision_repaint_ms,
+    trading_tier_ms, GuiRefreshTier,
 };
 pub use app_issues::{
     build_issue_board, connectivity_issue_board, issue_error_title, issue_resolved_title,

@@ -71,7 +71,24 @@ fn draw_header_cell_text(
     font: FontId,
     color: Color32,
 ) {
-    ui.painter().with_clip_rect(cell).text(
+    let painter = ui.painter().with_clip_rect(cell);
+    if text.contains('\n') {
+        let lines: Vec<&str> = text.lines().collect();
+        let n = lines.len().max(1) as f32;
+        let line_h = cell.height() / n;
+        for (i, line) in lines.iter().enumerate() {
+            let y = cell.min.y + line_h * (i as f32 + 0.5);
+            painter.text(
+                egui::pos2(cell.left() + CELL_PADDING_X, y),
+                egui::Align2::LEFT_CENTER,
+                *line,
+                font.clone(),
+                color,
+            );
+        }
+        return;
+    }
+    painter.text(
         cell.left_center(),
         egui::Align2::LEFT_CENTER,
         text,
