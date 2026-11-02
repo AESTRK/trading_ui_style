@@ -251,6 +251,7 @@ pub fn draw_selectable_row(
     row_height: f32,
     selected: bool,
     striped: bool,
+    row_highlight: Option<Color32>,
     row_index: usize,
     mut draw_cell: impl FnMut(&Ui, &str, Rect, Color32),
 ) -> Response {
@@ -260,6 +261,8 @@ pub fn draw_selectable_row(
     if selected {
         ui.painter()
             .rect_filled(rect, 1.0, ui.visuals().selection.bg_fill);
+    } else if let Some(fill) = row_highlight {
+        ui.painter().rect_filled(rect, 2.0, fill);
     } else if striped && row_index % 2 == 1 {
         ui.painter()
             .rect_filled(rect, 0.0, ui.visuals().faint_bg_color);

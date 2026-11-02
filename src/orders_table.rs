@@ -254,6 +254,7 @@ pub fn show_sortable_table_columns_with_menu(
                     ROW_HEIGHT,
                     false,
                     index % 2 == 1,
+                    None,
                     index,
                     |ui, key, cell, _default| {
                         data_table::draw_cell_text(
