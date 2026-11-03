@@ -305,6 +305,14 @@ pub fn poll_config_persist(
     poll_config_persist_for(ctx, app_id, env_keys)
 }
 
+/// Applique `statics_auto_reload` (persist) et commande `statics_consumer_reload`.
+pub fn process_statics_consumer_config(sync: &ConfigPersistSync) {
+    reference_client_rust::process_statics_consumer_config_sync(
+        sync.persist.as_ref(),
+        &sync.commands,
+    );
+}
+
 /// Mise à jour bus config persist (réglages + commandes éphémères).
 pub struct ConfigPersistSync {
     pub persist: Option<serde_json::Value>,
@@ -375,6 +383,7 @@ pub fn sync_config_persist_with_for(
     reload: impl FnOnce(&ConfigPersistSync),
 ) {
     if let Some(sync) = poll_config_persist_sync_for(ctx, app_id, env_keys) {
+        process_statics_consumer_config(&sync);
         reload(&sync);
     }
 }
@@ -386,8 +395,9 @@ pub fn sync_config_persist_for(
     env_keys: &[&str],
     reload: impl FnOnce(Option<Value>),
 ) {
-    if let Some(persist) = poll_config_persist_for(ctx, app_id, env_keys) {
-        reload(Some(persist));
+    if let Some(sync) = poll_config_persist_sync_for(ctx, app_id, env_keys) {
+        process_statics_consumer_config(&sync);
+        reload(sync.persist);
     }
 }
 
