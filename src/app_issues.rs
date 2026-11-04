@@ -149,7 +149,7 @@ fn format_board_errors(board: &StackIssueBoard) -> String {
 pub struct IssueBannerController {
     had_errors: bool,
     resolved_until: Option<Instant>,
-    /// Dernières lignes d'erreur affichées (reprises telles quelles dans le bandeau vert).
+    /// Dernières lignes d'erreur (journal interne ; le bandeau vert n'en reprend pas le libellé).
     last_error_banner_text: String,
 }
 
@@ -192,11 +192,8 @@ impl IssueBannerController {
     }
 
     pub(crate) fn resolved_banner_detail(&self, fallback: &str) -> String {
-        if self.last_error_banner_text.is_empty() {
-            fallback.trim().to_string()
-        } else {
-            self.last_error_banner_text.clone()
-        }
+        // Ne pas réutiliser le texte d'erreur en vert (ex. « statics_currency indisponible »).
+        fallback.trim().to_string()
     }
 
     fn on_board(&mut self, board: &StackIssueBoard) {
@@ -417,7 +414,7 @@ mod tests {
     }
 
     #[test]
-    fn issue_banner_controller_keeps_last_error_for_resolved_detail() {
+    fn issue_banner_controller_resolved_detail_uses_fallback_not_error_text() {
         let mut ctrl = IssueBannerController::default();
         let mut board = StackIssueBoard::new();
         board.push_error("capital_flows_rust OFF — ZMQ requis");
@@ -425,9 +422,6 @@ mod tests {
         board = StackIssueBoard::new();
         ctrl.on_board(&board);
         assert!(ctrl.showing_resolved());
-        assert_eq!(
-            ctrl.resolved_banner_detail("fallback"),
-            "capital_flows_rust OFF — ZMQ requis"
-        );
+        assert_eq!(ctrl.resolved_banner_detail("fallback"), "fallback");
     }
 }
