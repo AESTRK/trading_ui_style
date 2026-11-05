@@ -39,6 +39,7 @@ pub use gui_refresh::{
 };
 pub use app_issues::{
     build_issue_board, connectivity_issue_board, issue_error_title, issue_resolved_title,
+    resolved_alert_line,
     append_feed_local_freshness_warnings, default_resolved_detail,
     feed_publisher_issue_board, feed_publisher_issue_board_with_freshness,
     harmonized_connectivity_banner, DEFAULT_FEED_ZMQ_STALL_MS,

@@ -351,29 +351,45 @@ pub fn draw_feed_banner(
     clicked
 }
 
-/// Bandeau vert fixe (problème résolu, sans clignotement).
+/// Ligne « RESOLU : alerte … » (texte seul, fond panneau stack — pas de bandeau vert).
+pub fn draw_resolved_status_text(
+    ui: &mut egui::Ui,
+    line: &str,
+    dismiss: Option<(&mut BannerDismissRegistry, &str, &str)>,
+) {
+    allocate_banner_row(ui, ISSUE_BANNER_ROW_HEIGHT, |ui| {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            if let Some((reg, app_id, content)) = dismiss {
+                draw_banner_close_button(ui, reg, app_id, "resolved", content, false);
+            }
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.label(
+                    RichText::new(line)
+                        .color(BANNER_TEXT.gamma_multiply(0.88))
+                        .size(TEXT_SIZES.status),
+                );
+            });
+        });
+    });
+}
+
+/// Ancien bandeau vert pleine largeur — conservé si un appel externe subsiste.
 pub fn draw_resolved_banner(
     ui: &mut egui::Ui,
-    ctx: &egui::Context,
+    _ctx: &egui::Context,
     title: &str,
-    detail: &str,
+    _detail: &str,
     dismiss: Option<(&mut BannerDismissRegistry, &str)>,
 ) {
-    draw_feed_banner(
+    let line = if title.contains("alerte") {
+        title.to_string()
+    } else {
+        format!("RESOLU : alerte {title}")
+    };
+    draw_resolved_status_text(
         ui,
-        ctx,
-        &FeedBanner {
-            bg: BANNER_RESOLVED,
-            title: title.to_string(),
-            detail: detail.to_string(),
-        },
-        &[],
-        None,
-        None,
-        false,
-        dismiss.map(|(reg, app_id)| (reg, app_id, "resolved")),
-        Some(BannerTitleMark::Resolved),
-        false,
+        &line,
+        dismiss.map(|(reg, app_id)| (reg, app_id, line.as_str())),
     );
 }
 

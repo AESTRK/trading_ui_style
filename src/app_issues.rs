@@ -10,7 +10,7 @@ pub const DEFAULT_ISSUE_TTL: Duration = Duration::from_secs(45);
 pub const DEFAULT_MAX_ISSUE_RECORDS: usize = 16;
 pub const DEFAULT_MAX_BANNER_ISSUES: usize = 6;
 pub const DEFAULT_WARNING_BANNER_TITLE: &str = "AVERTISSEMENT";
-/// Durée du bandeau vert **RÉSOLU** après disparition des erreurs (secondes).
+/// Durée du message **RESOLU : alerte …** après disparition des erreurs (secondes).
 pub const DEFAULT_RESOLVED_BANNER_SECS: f64 = 10.0;
 pub const DEFAULT_RESOLVED_BANNER_DETAIL: &str = "Le problème signalé est corrigé.";
 
@@ -99,38 +99,43 @@ pub fn issue_error_title(app_display_name: &str) -> String {
     format!("ERREUR {}", app_display_name.trim())
 }
 
-pub fn issue_resolved_title(app_display_name: &str) -> String {
-    format!("RÉSOLU {}", app_display_name.trim())
+/// Ligne unique affichée quand une alerte disparaît (pas de bandeau vert plein écran).
+pub fn resolved_alert_line(app_display_name: &str) -> String {
+    format!(
+        "RESOLU : alerte {}",
+        app_display_name.trim()
+    )
 }
 
-/// Bandeau vert top après disparition des erreurs (flash puis auto-dismiss).
+pub fn issue_resolved_title(app_display_name: &str) -> String {
+    resolved_alert_line(app_display_name)
+}
+
+/// Message texte top après disparition des erreurs (flash puis auto-dismiss).
 pub fn show_resolved_banner(
     ctx: &egui::Context,
     app_display_name: &str,
-    detail: &str,
+    line: &str,
 ) {
-    let title = issue_resolved_title(app_display_name);
     with_dismiss_registry(ctx, app_display_name, |reg| {
-        if reg.is_dismissed_content("resolved", detail) {
+        if reg.is_dismissed_content("resolved", line) {
             return;
         }
         egui::TopBottomPanel::top(egui::Id::new("stack_issue_resolved_banner"))
             .resizable(false)
             .show_separator_line(false)
             .frame(crate::egui_theme::stack_top_panel_frame(ctx))
-            .exact_height(crate::banner::issue_panel_exact_height(1))
+            .exact_height(crate::banner::issue_banner_strip_outer_height())
             .show(ctx, |ui| {
-            crate::egui_theme::paint_top_stack_panel_bg(ui);
-            crate::banner::prepare_issue_top_panel(ui);
-            crate::banner::draw_resolved_banner(
-                ui,
-                ctx,
-                &title,
-                detail,
-                Some((reg, app_display_name)),
-            );
-            crate::egui_theme::fill_top_stack_remainder(ui);
-        });
+                crate::egui_theme::paint_top_stack_panel_bg(ui);
+                crate::banner::prepare_issue_top_panel(ui);
+                crate::banner::draw_resolved_status_text(
+                    ui,
+                    line,
+                    Some((reg, app_display_name, line)),
+                );
+                crate::egui_theme::fill_top_stack_remainder(ui);
+            });
     });
 }
 
@@ -176,8 +181,9 @@ impl IssueBannerController {
             return;
         }
         if self.showing_resolved() {
-            let detail = self.resolved_banner_detail(resolved_detail);
-            show_resolved_banner(ctx, app_display_name, &detail);
+            let _ = resolved_detail;
+            let line = resolved_alert_line(app_display_name);
+            show_resolved_banner(ctx, app_display_name, &line);
             if let Some(until) = self.resolved_until {
                 let rem = until.saturating_duration_since(Instant::now());
                 if rem > Duration::ZERO {
@@ -189,11 +195,6 @@ impl IssueBannerController {
         if !board.is_empty() {
             show_app_issues(ctx, app_display_name, board);
         }
-    }
-
-    pub(crate) fn resolved_banner_detail(&self, fallback: &str) -> String {
-        // Ne pas réutiliser le texte d'erreur en vert (ex. « statics_currency indisponible »).
-        fallback.trim().to_string()
     }
 
     fn on_board(&mut self, board: &StackIssueBoard) {
@@ -335,12 +336,9 @@ pub fn operational_issue_board(connectivity_text: &str, operational_error: &str)
     board
 }
 
-/// Texte vert affiché après disparition des erreurs (harmonisé stack).
+/// Alias — même libellé que [`resolved_alert_line`].
 pub fn default_resolved_detail(app_display_name: &str) -> String {
-    format!(
-        "{} — plus d'erreur bloquante.",
-        app_display_name.trim()
-    )
+    resolved_alert_line(app_display_name)
 }
 
 /// Bandeau rouge / orange / vert **RÉSOLU** — pattern standard toutes apps egui.
@@ -393,7 +391,10 @@ mod tests {
 
     #[test]
     fn issue_resolved_title_formats_app_name() {
-        assert_eq!(issue_resolved_title("FEES"), "RÉSOLU FEES");
+        assert_eq!(
+            issue_resolved_title("FEES"),
+            "RESOLU : alerte FEES"
+        );
     }
 
     #[test]
@@ -413,15 +414,4 @@ mod tests {
         assert!(!ctrl.showing_resolved());
     }
 
-    #[test]
-    fn issue_banner_controller_resolved_detail_uses_fallback_not_error_text() {
-        let mut ctrl = IssueBannerController::default();
-        let mut board = StackIssueBoard::new();
-        board.push_error("capital_flows_rust OFF — ZMQ requis");
-        ctrl.on_board(&board);
-        board = StackIssueBoard::new();
-        ctrl.on_board(&board);
-        assert!(ctrl.showing_resolved());
-        assert_eq!(ctrl.resolved_banner_detail("fallback"), "fallback");
-    }
 }
