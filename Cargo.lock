@@ -2220,6 +2220,7 @@ name = "network_audit_rust"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "app_runtime_rust",
  "chrono",
  "chrono-tz",
  "serde",

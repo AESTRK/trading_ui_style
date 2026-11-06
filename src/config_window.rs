@@ -23,6 +23,71 @@ pub const CONFIG_WINDOW_SIZE_TALL: egui::Vec2 = egui::vec2(520.0, 720.0);
 
 const MIN_VIEWPORT_SIZE: egui::Vec2 = egui::vec2(360.0, 280.0);
 
+const GEOMETRY_PERSIST_KEYS: &[&str] = &["gui_geometry", "window_geometry", "app_geometry"];
+
+/// Parse `WxH` persist (ex. `1280x720`).
+pub fn parse_window_geometry_wxh(geometry: &str) -> Option<egui::Vec2> {
+    let normalized = geometry
+        .trim()
+        .to_ascii_lowercase()
+        .replace('×', "x")
+        .replace(' ', "");
+    let (w, h) = normalized.split_once('x')?;
+    let w: f32 = w.parse().ok()?;
+    let h: f32 = h.parse().ok()?;
+    if w >= MIN_VIEWPORT_SIZE.x && h >= MIN_VIEWPORT_SIZE.y {
+        Some(egui::vec2(w, h))
+    } else {
+        None
+    }
+}
+
+pub fn is_geometry_persist_key(key: &str) -> bool {
+    GEOMETRY_PERSIST_KEYS
+        .iter()
+        .any(|k| key.eq_ignore_ascii_case(k))
+}
+
+/// Diff persist ne contient que des clés géométrie (resize live sans reload settings).
+pub fn is_geometry_only_persist_diff(diff: &Value) -> bool {
+    let Some(obj) = diff.as_object() else {
+        return false;
+    };
+    if obj.is_empty() {
+        return false;
+    }
+    obj.keys()
+        .all(|k| !k.starts_with('_') && is_geometry_persist_key(k))
+}
+
+pub fn geometry_from_persist_value(value: &Value) -> Option<String> {
+    let obj = value.as_object()?;
+    for key in GEOMETRY_PERSIST_KEYS {
+        if let Some(v) = obj.get(*key).and_then(|v| v.as_str()) {
+            let t = v.trim();
+            if !t.is_empty() {
+                return Some(t.to_string());
+            }
+        }
+    }
+    None
+}
+
+/// Redimensionne la fenêtre principale (viewport root) sans réinitialiser le persist UI.
+pub fn apply_live_window_geometry_to_root_viewport(ctx: &egui::Context, geometry: &str) {
+    let Some(size) = parse_window_geometry_wxh(geometry) else {
+        tracing::warn!("WINDOW_GEOMETRY_LIVE_SKIP | invalid={geometry:?}");
+        return;
+    };
+    clear_viewport_size_hint(ctx, ctx.viewport_id());
+    ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(size));
+    tracing::info!(
+        "WINDOW_GEOMETRY_LIVE | w={:.0} h={:.0}",
+        size.x,
+        size.y
+    );
+}
+
 fn initial_size_key(viewport_id: egui::ViewportId) -> egui::Id {
     egui::Id::new((viewport_id, "initial_size_set"))
 }
@@ -316,6 +381,7 @@ pub fn process_statics_consumer_config(sync: &ConfigPersistSync) {
 /// Mise à jour bus config persist (réglages + commandes éphémères).
 pub struct ConfigPersistSync {
     pub persist: Option<serde_json::Value>,
+    pub persist_diff: serde_json::Value,
     pub commands: Vec<app_runtime_rust::ConfigPersistCommand>,
 }
 
@@ -329,6 +395,7 @@ pub fn poll_config_persist_sync_for(
     ensure_config_persist_listener(ctx, app_id, env_keys);
     let message = app_runtime_rust::take_config_persist_update(&persist_id)?;
     let commands = message.commands.clone();
+    let persist_diff = message.persist_diff.clone();
     let filtered = app_runtime_rust::filter_persist_for_app(&persist_id, &message.persist);
     let mut msg = message;
     msg.persist = filtered.clone();
@@ -336,11 +403,16 @@ pub fn poll_config_persist_sync_for(
         app_runtime_rust::apply_config_persist_message(&persist_id, env_keys, &msg)
             .ok()
             .filter(|v| persist_payload_nonempty(v))
+            .map(|v| app_runtime_rust::expand_persist_for_reload(&persist_id, env_keys, &v))
     } else {
         let _ = app_runtime_rust::apply_config_persist_message(&persist_id, env_keys, &msg);
         None
     };
-    Some(ConfigPersistSync { persist, commands })
+    Some(ConfigPersistSync {
+        persist_diff,
+        persist,
+        commands,
+    })
 }
 
 fn persist_payload_nonempty(persist: &serde_json::Value) -> bool {
@@ -384,7 +456,15 @@ pub fn sync_config_persist_with_for(
 ) {
     if let Some(sync) = poll_config_persist_sync_for(ctx, app_id, env_keys) {
         process_statics_consumer_config(&sync);
-        reload(&sync);
+        let geometry_only = is_geometry_only_persist_diff(&sync.persist_diff);
+        if geometry_only {
+            if let Some(geom) = geometry_from_persist_value(&sync.persist_diff) {
+                apply_live_window_geometry_to_root_viewport(ctx, &geom);
+            }
+        }
+        if !geometry_only || !sync.commands.is_empty() {
+            reload(&sync);
+        }
     }
 }
 
