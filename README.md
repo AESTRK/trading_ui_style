@@ -57,7 +57,7 @@ Bibliothèque de style commune consommée par les applications Rust (`orderbook_
 
 ## Launcher / Dock macOS
 
-Le launcher Xcode définit `ALPHA_LAGOON_HIDE_DOCK=1` pour toute la stack (équivalent de `macos_dock.py` côté Python/Tk). Avec cette variable, les apps macOS utilisent `ActivationPolicy::Accessory` et, pour les binaires **hors .app**, un réglage précoce de `NSApplication` : **pas d’icône dans le Dock** pour chaque process.
+Le launcher Xcode définit `ALPHA_LAGOON_HIDE_DOCK=1` pour toute la stack (équivalent de `macos_dock.py` côté Python/Tk). Avec cette variable, les apps macOS passent `ActivationPolicy::Accessory` au `EventLoopBuilder` winit : **pas d’icône dans le Dock** pour chaque process (binaire non bundle).
 
 Repli ponctuel si une version macOS / winit pose problème (fenêtre invisible) : définir **`ALPHA_LAGOON_GUI_REGULAR=1`** pour forcer une app normale avec icône Dock.
 

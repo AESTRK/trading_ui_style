@@ -55,11 +55,6 @@ pub fn prepare_native_options(mut options: eframe::NativeOptions) -> eframe::Nat
         return options;
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        crate::macos_dock_policy::apply_accessory_activation_policy();
-    }
-
     let previous = options.event_loop_builder.take();
     options.event_loop_builder = Some(Box::new(move |builder| {
         if let Some(prev) = previous {

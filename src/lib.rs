@@ -7,8 +7,6 @@ pub mod egui_theme;
 pub mod gui_refresh;
 pub mod issues;
 pub mod launcher;
-#[cfg(all(feature = "launcher", target_os = "macos"))]
-mod macos_dock_policy;
 pub mod order_amount_format;
 pub mod order_grid;
 pub mod orders_table;
