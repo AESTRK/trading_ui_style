@@ -44,9 +44,9 @@ Bibliothèque de style commune consommée par les applications Rust (`orderbook_
 | `TEXT_SIZES` | Tailles de police standardisées |
 | `format_pct`, `format_eur_compact`, `format_volume_compact` | Formatters |
 | `pct_rgb` | Couleur conditionnelle selon variation |
-| `hide_dock_requested` | Lit `ALPHA_LAGOON_HIDE_DOCK` (icône Dock) |
+| `hide_dock_requested` | Lit `ALPHA_LAGOON_HIDE_DOCK` (masque l’icône Dock côté macOS) |
 | `prepare_native_options` | Applique le masquage Dock sur `eframe::NativeOptions` |
-| `run_native` | `eframe::run_native` + masquage Dock (fenêtres visibles au lancement) |
+| `run_native` | `eframe::run_native` + masquage Dock quand le launcher le demande |
 | `apply_launcher_hide_dock!` | Compatibilité — préférer `run_native` |
 | `banner::draw_feed_banner` | Bandeau réseau 2 lignes (titre, métriques, stats WS, bouton) |
 | `banner::draw_secondary_banner` | Bandeau secondaire (carnets, API absente, connectivité) |
@@ -57,9 +57,11 @@ Bibliothèque de style commune consommée par les applications Rust (`orderbook_
 
 ## Launcher / Dock macOS
 
-Le launcher Xcode définit `ALPHA_LAGOON_HIDE_DOCK=1` pour toute la stack (équivalent de `macos_dock.py` côté Python/Tk).
+Le launcher Xcode définit `ALPHA_LAGOON_HIDE_DOCK=1` pour toute la stack (équivalent de `macos_dock.py` côté Python/Tk). Avec cette variable, les apps macOS utilisent `ActivationPolicy::Accessory` et, pour les binaires **hors .app**, un réglage précoce de `NSApplication` : **pas d’icône dans le Dock** pour chaque process.
 
-Chaque app GUI Rust doit lancer sa fenêtre via `trading_ui_style_rust::run_native` — le masquage Dock est automatique :
+Repli ponctuel si une version macOS / winit pose problème (fenêtre invisible) : définir **`ALPHA_LAGOON_GUI_REGULAR=1`** pour forcer une app normale avec icône Dock.
+
+Chaque app GUI Rust doit lancer sa fenêtre via `trading_ui_style_rust::run_native` — le masquage Dock suit `ALPHA_LAGOON_HIDE_DOCK` :
 
 ```rust
 trading_ui_style_rust::run_native(

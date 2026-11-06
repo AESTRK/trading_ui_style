@@ -41,20 +41,23 @@ pub fn hide_dock_requested() -> bool {
         .unwrap_or(false)
 }
 
-/// Politique d’activation explicite « accessory » (sans icône Dock). Désactivée par défaut :
-/// avec `ALPHA_LAGOON_HIDE_DOCK=1`, l’ancien code imposait `ActivationPolicy::Accessory`, ce qui sur
-/// certaines combinaisons macOS + winit/eframe laissait le process vivant **sans fenêtre visible**
-/// (symptôme : PID dans le launcher, aucune fenêtre CGWindow).
-fn gui_accessory_activation_requested() -> bool {
-    std::env::var("ALPHA_LAGOON_GUI_ACCESSORY")
+/// `true` pour rester en application « régulière » (icône Dock), même si `ALPHA_LAGOON_HIDE_DOCK=1`.
+/// Repli si une combinaison macOS + winit/eframe laisse le process sans fenêtre visible avec Accessory.
+fn gui_regular_activation_requested() -> bool {
+    std::env::var("ALPHA_LAGOON_GUI_REGULAR")
         .map(|v| v.trim() == "1")
         .unwrap_or(false)
 }
 
 /// Applique la politique Dock launcher sur des `eframe::NativeOptions`.
 pub fn prepare_native_options(mut options: eframe::NativeOptions) -> eframe::NativeOptions {
-    if !hide_dock_requested() || !gui_accessory_activation_requested() {
+    if !hide_dock_requested() || gui_regular_activation_requested() {
         return options;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        crate::macos_dock_policy::apply_accessory_activation_policy();
     }
 
     let previous = options.event_loop_builder.take();
