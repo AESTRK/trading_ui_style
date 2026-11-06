@@ -1,5 +1,7 @@
 # trading_ui_style_rust
 
+
+> **IPC** : registre [runtime/ipc.json](https://github.com/AESTRK/config_manager/blob/main/config/runtime/ipc.json) · inject `@ipc.<canal>` au boot (pas de port en dur dans le code). Voir [IPC_AND_LOGS.md](https://github.com/AESTRK/config_manager/blob/main/config/IPC_AND_LOGS.md).
 > Crate Rust partagé — palettes, couleurs et formatters UI pour les applications de trading egui.
 
 ## Rôle dans l'écosystème
