@@ -41,9 +41,19 @@ pub fn hide_dock_requested() -> bool {
         .unwrap_or(false)
 }
 
+/// Politique d’activation explicite « accessory » (sans icône Dock). Désactivée par défaut :
+/// avec `ALPHA_LAGOON_HIDE_DOCK=1`, l’ancien code imposait `ActivationPolicy::Accessory`, ce qui sur
+/// certaines combinaisons macOS + winit/eframe laissait le process vivant **sans fenêtre visible**
+/// (symptôme : PID dans le launcher, aucune fenêtre CGWindow).
+fn gui_accessory_activation_requested() -> bool {
+    std::env::var("ALPHA_LAGOON_GUI_ACCESSORY")
+        .map(|v| v.trim() == "1")
+        .unwrap_or(false)
+}
+
 /// Applique la politique Dock launcher sur des `eframe::NativeOptions`.
 pub fn prepare_native_options(mut options: eframe::NativeOptions) -> eframe::NativeOptions {
-    if !hide_dock_requested() {
+    if !hide_dock_requested() || !gui_accessory_activation_requested() {
         return options;
     }
 
