@@ -179,7 +179,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
-name = "app_runtime_rust"
+name = "app_runtime"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -2216,18 +2216,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "network_audit_rust"
+name = "network_audit"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "app_runtime_rust",
+ "app_runtime",
  "chrono",
  "chrono-tz",
  "serde",
  "serde_json",
  "sha2",
  "tracing",
- "trading_models_rust",
+ "trading_models",
  "zmq",
 ]
 
@@ -3060,17 +3060,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "reference_client_rust"
+name = "reference_client"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "app_runtime_rust",
+ "app_runtime",
  "chrono",
- "network_audit_rust",
+ "network_audit",
  "reqwest",
  "serde_json",
  "tracing",
- "trading_models_rust",
+ "trading_models",
  "tungstenite",
  "zmq",
 ]
@@ -4038,7 +4038,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "trading_models_rust"
+name = "trading_models"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -4048,17 +4048,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "trading_ui_style_rust"
+name = "trading_ui_style"
 version = "0.1.0"
 dependencies = [
- "app_runtime_rust",
+ "app_runtime",
  "eframe",
  "egui",
  "libc",
- "reference_client_rust",
+ "reference_client",
  "serde_json",
  "tracing",
- "trading_models_rust",
+ "trading_models",
  "winit",
 ]
 

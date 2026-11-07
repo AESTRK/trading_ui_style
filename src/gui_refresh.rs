@@ -1,6 +1,6 @@
-//! Planification repaint egui — policy suite ([`app_runtime_rust::gui_refresh`]).
-use app_runtime_rust::{repaint_after_duration, resolve_hub_tick_ms, resolve_ui_refresh_ms};
-pub use app_runtime_rust::GuiRefreshTier;
+//! Planification repaint egui — policy suite ([`app_runtime::gui_refresh`]).
+use app_runtime::{repaint_after_duration, resolve_hub_tick_ms, resolve_ui_refresh_ms};
+pub use app_runtime::GuiRefreshTier;
 use eframe::egui;
 
 /// Repaint planifié : persist `ui_refresh_ms` > 0 sinon suite (tier).

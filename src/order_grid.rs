@@ -1,8 +1,8 @@
-//! Construction de lignes grille partagée pour `orders_rust`.
+//! Construction de lignes grille partagée pour `orders`.
 
 use egui::Color32;
-use reference_client_rust::StaticsFormatCache;
-use trading_models_rust::{display_time_in_force, ExecutedOrder, OpenOrder};
+use reference_client::StaticsFormatCache;
+use trading_models::{display_time_in_force, ExecutedOrder, OpenOrder};
 
 use crate::order_amount_format::{
     grid_cur_px, grid_price, grid_price_or_dash, grid_qty, grid_quote_notional,

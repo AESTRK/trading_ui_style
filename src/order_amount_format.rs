@@ -1,9 +1,9 @@
 //! Format qty/prix grille ordres — Statics (`None` → « — », pas d’heuristique legacy).
 
-use reference_client_rust::{
+use reference_client::{
     format_price_for_pair, format_qty_for_pair, StaticsFormatCache,
 };
-use trading_models_rust::VenueId;
+use trading_models::VenueId;
 
 const MISSING: &str = "—";
 

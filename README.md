@@ -1,4 +1,4 @@
-# trading_ui_style_rust
+# trading_ui_style
 
 
 > **IPC** : registre [runtime/ipc.json](https://github.com/AESTRK/config_manager/blob/main/config/runtime/ipc.json) · inject `@ipc.<canal>` au boot (pas de port en dur dans le code). Voir [IPC_AND_LOGS.md](https://github.com/AESTRK/config_manager/blob/main/config/IPC_AND_LOGS.md).
@@ -6,7 +6,7 @@
 
 ## Rôle dans l'écosystème
 
-Bibliothèque de style commune consommée par les applications Rust (`orderbook_rust`, `chartboard_rust`, `statics_currency_rust`, `portfolio_rust`, `risk_rust`, …). Centralise les couleurs achat/vente, les palettes clair/sombre, les bandeaux connectivité / issues et les helpers de formatage pour garantir une cohérence visuelle entre les outils.
+Bibliothèque de style commune consommée par les applications Rust (`orderbook`, `chartboard`, `statics_currency`, `portfolio`, `risk`, …). Centralise les couleurs achat/vente, les palettes clair/sombre, les bandeaux connectivité / issues et les helpers de formatage pour garantir une cohérence visuelle entre les outils.
 
 ## Entrées et sorties
 
@@ -61,10 +61,10 @@ Le launcher Xcode définit `ALPHA_LAGOON_HIDE_DOCK=1` pour toute la stack (équi
 
 Repli ponctuel si une version macOS / winit pose problème (fenêtre invisible) : définir **`ALPHA_LAGOON_GUI_REGULAR=1`** pour forcer une app normale avec icône Dock.
 
-Chaque app GUI Rust doit lancer sa fenêtre via `trading_ui_style_rust::run_native` — le masquage Dock suit `ALPHA_LAGOON_HIDE_DOCK` :
+Chaque app GUI Rust doit lancer sa fenêtre via `trading_ui_style::run_native` — le masquage Dock suit `ALPHA_LAGOON_HIDE_DOCK` :
 
 ```rust
-trading_ui_style_rust::run_native(
+trading_ui_style::run_native(
     APP_TITLE,
     eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -79,14 +79,14 @@ trading_ui_style_rust::run_native(
 )?;
 ```
 
-Aucune dépendance `winit` supplémentaire dans l'app : elle est portée par `trading_ui_style_rust` (feature `launcher`, activée par défaut).
+Aucune dépendance `winit` supplémentaire dans l'app : elle est portée par `trading_ui_style` (feature `launcher`, activée par défaut).
 
 ## Installation (consommateur)
 
 Dépendance Git dans `Cargo.toml` :
 
 ```toml
-trading_ui_style_rust = { git = "https://github.com/AESTRK/trading_ui_style_rust.git", branch = "main" }
+trading_ui_style = { git = "https://github.com/AESTRK/trading_ui_style.git", branch = "main" }
 ```
 
 ## Build et tests
@@ -98,4 +98,4 @@ cargo test
 
 ## Dépôt
 
-https://github.com/AESTRK/trading_ui_style_rust
+https://github.com/AESTRK/trading_ui_style

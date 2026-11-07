@@ -1,6 +1,6 @@
 //! Modèle unifié erreurs / avertissements — journal TTL + bandeau egui + logs tracing.
 //!
-//! Pattern de référence : `orderbook_rust` (`IssueJournal` + bandeau rouge / orange).
+//! Pattern de référence : `orderbook` (`IssueJournal` + bandeau rouge / orange).
 
 use crate::banner_dismiss::with_dismiss_registry;
 use crate::issues::{IssueJournal, IssueSeverity, StackIssueBoard};

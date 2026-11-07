@@ -1,7 +1,7 @@
 //! Grille ordres (Orders / Open Orders) — tri par clic sur les en-têtes, UPDATED en premier.
 
 use egui::{Color32, FontId, Id, Ui};
-use trading_models_rust::VenueId;
+use trading_models::VenueId;
 
 use crate::data_table::{self, DEFAULT_ROW_HEIGHT};
 use crate::TEXT_SIZES;

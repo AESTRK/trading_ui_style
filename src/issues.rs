@@ -522,7 +522,7 @@ mod tests {
     fn classify_service_off_banner_as_error() {
         assert_eq!(
             classify_issue_severity(
-                "capital_flows_rust OFF — pas de flux capitaux (ZMQ requis)"
+                "capital_flows OFF — pas de flux capitaux (ZMQ requis)"
             ),
             IssueSeverity::Error
         );

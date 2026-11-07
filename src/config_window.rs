@@ -326,7 +326,7 @@ pub fn minimal_config_panel(ui: &mut egui::Ui, app_id: &str, reference: &str, ru
 
 /// ID stack (`APP_PERSIST_ID`) ou nom crate Rust.
 fn resolve_persist_app_id(crate_app_id: &str) -> String {
-    app_runtime_rust::persist_app_id(crate_app_id)
+    app_runtime::persist_app_id(crate_app_id)
 }
 
 /// Installe l'écouteur ZMQ + relay (une fois par app).
@@ -347,7 +347,7 @@ fn ensure_config_persist_listener(ctx: &egui::Context, app_id: &str, env_keys: &
     }
     let ctx = ctx.clone();
     let persist_id = persist_id.clone();
-    app_runtime_rust::install_config_persist_listener(&persist_id, move || {
+    app_runtime::install_config_persist_listener(&persist_id, move || {
         ctx.request_repaint();
     });
     if std::env::var("CONFIG_PERSIST_RELAY_EXTERNAL")
@@ -357,7 +357,7 @@ fn ensure_config_persist_listener(ctx: &egui::Context, app_id: &str, env_keys: &
         })
         .unwrap_or(true)
     {
-        app_runtime_rust::ensure_config_persist_relay();
+        app_runtime::ensure_config_persist_relay();
     }
 }
 
@@ -372,7 +372,7 @@ pub fn poll_config_persist(
 
 /// Applique `statics_auto_reload` (persist) et commande `statics_consumer_reload`.
 pub fn process_statics_consumer_config(sync: &ConfigPersistSync) {
-    reference_client_rust::process_statics_consumer_config_sync(
+    reference_client::process_statics_consumer_config_sync(
         sync.persist.as_ref(),
         &sync.commands,
     );
@@ -382,7 +382,7 @@ pub fn process_statics_consumer_config(sync: &ConfigPersistSync) {
 pub struct ConfigPersistSync {
     pub persist: Option<serde_json::Value>,
     pub persist_diff: serde_json::Value,
-    pub commands: Vec<app_runtime_rust::ConfigPersistCommand>,
+    pub commands: Vec<app_runtime::ConfigPersistCommand>,
 }
 
 /// Variante avec les mêmes `env_keys` que `AppPaths::runtime_settings_file`.
@@ -393,19 +393,19 @@ pub fn poll_config_persist_sync_for(
 ) -> Option<ConfigPersistSync> {
     let persist_id = resolve_persist_app_id(app_id);
     ensure_config_persist_listener(ctx, app_id, env_keys);
-    let message = app_runtime_rust::take_config_persist_update(&persist_id)?;
+    let message = app_runtime::take_config_persist_update(&persist_id)?;
     let commands = message.commands.clone();
     let persist_diff = message.persist_diff.clone();
-    let filtered = app_runtime_rust::filter_persist_for_app(&persist_id, &message.persist);
+    let filtered = app_runtime::filter_persist_for_app(&persist_id, &message.persist);
     let mut msg = message;
     msg.persist = filtered.clone();
     let persist = if persist_payload_nonempty(&filtered) {
-        app_runtime_rust::apply_config_persist_message(&persist_id, env_keys, &msg)
+        app_runtime::apply_config_persist_message(&persist_id, env_keys, &msg)
             .ok()
             .filter(|v| persist_payload_nonempty(v))
-            .map(|v| app_runtime_rust::expand_persist_for_reload(&persist_id, env_keys, &v))
+            .map(|v| app_runtime::expand_persist_for_reload(&persist_id, env_keys, &v))
     } else {
-        let _ = app_runtime_rust::apply_config_persist_message(&persist_id, env_keys, &msg);
+        let _ = app_runtime::apply_config_persist_message(&persist_id, env_keys, &msg);
         None
     };
     Some(ConfigPersistSync {
