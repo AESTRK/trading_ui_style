@@ -99,3 +99,15 @@ cargo test
 ## Dépôt
 
 https://github.com/AESTRK/trading_ui_style
+
+<!-- stack-health:start -->
+## Alertes & cadence (config)
+
+Index stack : `~/XcodeProjects/config_manager/docs/ERROR_LEVEL_BY_APP.md` · cadence : [GUI_REFRESH_POLICY.md](https://github.com/AESTRK/config_manager/blob/main/config/GUI_REFRESH_POLICY.md).
+
+| | |
+|---|---|
+| **Boot CM** (`boot_alerts`, post-`APP_OPERATIONAL_READY`) | — |
+| **Dérive CM** (`error_level.checks`) | — |
+| **Refresh** (persist runtime / CM) | paliers suite (`ui_refresh_ms` / `poll_interval_ms` / `hub_tick_ms` = 0) |
+<!-- stack-health:end -->
