@@ -389,6 +389,7 @@ pub fn classify_issue_severity(text: &str) -> IssueSeverity {
         "SUBSCRIBE_FAILED",
         "TOKIO_RUNTIME",
         "STATICS",
+        "INSTRUMENT_MAP",
         "CONNECTIVITY",
         "IGNORÉ",
         "IGNORED",
