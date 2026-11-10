@@ -99,7 +99,7 @@ pub fn issue_error_title(app_display_name: &str) -> String {
     format!("ERREUR {}", app_display_name.trim())
 }
 
-/// Ligne unique affichée quand une alerte disparaît (pas de bandeau vert plein écran).
+/// Ligne unique affichée quand une alerte disparaît (bandeau vert harmonisé).
 pub fn resolved_alert_line(app_display_name: &str) -> String {
     format!(
         "RESOLU : alerte {}",
@@ -115,10 +115,16 @@ pub fn issue_resolved_title(app_display_name: &str) -> String {
 pub fn show_resolved_banner(
     ctx: &egui::Context,
     app_display_name: &str,
-    line: &str,
+    title: &str,
+    detail: &str,
 ) {
+    let dismiss_key = if detail.trim().is_empty() {
+        title.to_string()
+    } else {
+        format!("{title} · {detail}")
+    };
     with_dismiss_registry(ctx, app_display_name, |reg| {
-        if reg.is_dismissed_content("resolved", line) {
+        if reg.is_dismissed_content("resolved", &dismiss_key) {
             return;
         }
         egui::TopBottomPanel::top(egui::Id::new("stack_issue_resolved_banner"))
@@ -129,33 +135,35 @@ pub fn show_resolved_banner(
             .show(ctx, |ui| {
                 crate::egui_theme::paint_top_stack_panel_bg(ui);
                 crate::banner::prepare_issue_top_panel(ui);
-                crate::banner::draw_resolved_status_text(
+                crate::banner::draw_resolved_banner_strip(
                     ui,
-                    line,
-                    Some((reg, app_display_name, line)),
+                    title,
+                    detail,
+                    Some((reg, app_display_name, dismiss_key.as_str())),
                 );
                 crate::egui_theme::fill_top_stack_remainder(ui);
             });
     });
 }
 
-fn format_board_errors(board: &StackIssueBoard) -> String {
-    board
-        .errors()
-        .iter()
-        .map(|s| s.trim())
-        .filter(|s| !s.is_empty())
-        .collect::<Vec<_>>()
-        .join(" · ")
+fn format_board_issues(board: &StackIssueBoard) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for line in board.errors().iter().chain(board.warnings()) {
+        let t = line.trim();
+        if !t.is_empty() {
+            parts.push(t);
+        }
+    }
+    parts.join(" · ")
 }
 
 /// Mémorise les erreurs actives et affiche un flash vert quand elles disparaissent.
 #[derive(Debug, Default)]
 pub struct IssueBannerController {
-    had_errors: bool,
+    had_active_issues: bool,
     resolved_until: Option<Instant>,
-    /// Dernières lignes d'erreur (journal interne ; le bandeau vert n'en reprend pas le libellé).
-    last_error_banner_text: String,
+    /// Dernier texte bandeau (erreurs / avertissements) avant disparition → détail « RESOLU ».
+    last_active_banner_text: String,
 }
 
 impl IssueBannerController {
@@ -181,9 +189,13 @@ impl IssueBannerController {
             return;
         }
         if self.showing_resolved() {
-            let _ = resolved_detail;
-            let line = resolved_alert_line(app_display_name);
-            show_resolved_banner(ctx, app_display_name, &line);
+            let title = resolved_alert_line(app_display_name);
+            let detail = if !self.last_active_banner_text.is_empty() {
+                self.last_active_banner_text.clone()
+            } else {
+                resolved_detail.trim().to_string()
+            };
+            show_resolved_banner(ctx, app_display_name, &title, &detail);
             if let Some(until) = self.resolved_until {
                 let rem = until.saturating_duration_since(Instant::now());
                 if rem > Duration::ZERO {
@@ -198,15 +210,15 @@ impl IssueBannerController {
     }
 
     fn on_board(&mut self, board: &StackIssueBoard) {
-        let errors_active = board.has_errors();
-        if errors_active {
+        let issues_active = !board.is_empty();
+        if issues_active {
             self.resolved_until = None;
-            self.last_error_banner_text = format_board_errors(board);
-        } else if self.had_errors {
+            self.last_active_banner_text = format_board_issues(board);
+        } else if self.had_active_issues {
             self.resolved_until =
                 Some(Instant::now() + Duration::from_secs_f64(DEFAULT_RESOLVED_BANNER_SECS));
         }
-        self.had_errors = errors_active;
+        self.had_active_issues = issues_active;
         if let Some(until) = self.resolved_until {
             if Instant::now() >= until {
                 self.resolved_until = None;
@@ -412,6 +424,17 @@ mod tests {
         board.push_error("retour en erreur");
         ctrl.on_board(&board);
         assert!(!ctrl.showing_resolved());
+    }
+
+    #[test]
+    fn format_board_issues_includes_warnings() {
+        let mut board = StackIssueBoard::new();
+        board.push_error("ERREUR A");
+        board.push_warning("AVERTISSEMENT B");
+        assert_eq!(
+            format_board_issues(&board),
+            "ERREUR A · AVERTISSEMENT B"
+        );
     }
 
 }

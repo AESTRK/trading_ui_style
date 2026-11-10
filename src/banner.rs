@@ -351,45 +351,61 @@ pub fn draw_feed_banner(
     clicked
 }
 
-/// Ligne « RESOLU : alerte … » (texte seul, fond panneau stack — pas de bandeau vert).
-pub fn draw_resolved_status_text(
+/// Bandeau vert « RESOLU : alerte … » (même gabarit que erreur / avertissement).
+pub fn draw_resolved_banner_strip(
     ui: &mut egui::Ui,
-    line: &str,
+    title: &str,
+    detail: &str,
     dismiss: Option<(&mut BannerDismissRegistry, &str, &str)>,
 ) {
-    allocate_banner_row(ui, ISSUE_BANNER_ROW_HEIGHT, |ui| {
-        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if let Some((reg, app_id, content)) = dismiss {
-                draw_banner_close_button(ui, reg, app_id, "resolved", content, false);
-            }
-            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                ui.label(
-                    RichText::new(line)
-                        .color(BANNER_TEXT.gamma_multiply(0.88))
-                        .size(TEXT_SIZES.status),
-                );
-            });
-        });
+    draw_banner_frame(ui, rgb_color(BANNER_RESOLVED), issue_strip_inner_margin(), true, |ui| {
+        draw_banner_title_detail_row(
+            ui,
+            BannerTitleMark::Resolved,
+            title,
+            detail,
+            true,
+            |ui| {
+                if let Some((reg, app_id, content)) = dismiss {
+                    draw_banner_close_button(ui, reg, app_id, "resolved", content, false);
+                }
+            },
+        );
     });
 }
 
-/// Ancien bandeau vert pleine largeur — conservé si un appel externe subsiste.
+/// Texte résolu seul (sans fond vert) — préférer [`draw_resolved_banner_strip`].
+pub fn draw_resolved_status_text(
+    ui: &mut egui::Ui,
+    title: &str,
+    detail: &str,
+    dismiss: Option<(&mut BannerDismissRegistry, &str, &str)>,
+) {
+    draw_resolved_banner_strip(ui, title, detail, dismiss);
+}
+
 pub fn draw_resolved_banner(
     ui: &mut egui::Ui,
     _ctx: &egui::Context,
     title: &str,
-    _detail: &str,
+    detail: &str,
     dismiss: Option<(&mut BannerDismissRegistry, &str)>,
 ) {
-    let line = if title.contains("alerte") {
+    let headline = if title.contains("alerte") {
         title.to_string()
     } else {
         format!("RESOLU : alerte {title}")
     };
+    let dismiss_key = if detail.trim().is_empty() {
+        headline.clone()
+    } else {
+        format!("{headline} · {detail}")
+    };
     draw_resolved_status_text(
         ui,
-        &line,
-        dismiss.map(|(reg, app_id)| (reg, app_id, line.as_str())),
+        &headline,
+        detail,
+        dismiss.map(|(reg, app_id)| (reg, app_id, dismiss_key.as_str())),
     );
 }
 
