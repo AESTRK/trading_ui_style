@@ -532,7 +532,7 @@ mod tests {
     #[test]
     fn compact_merges_hub_connectivity_and_budget_into_one_error() {
         let mut errors = vec![
-            "BUDGET RÉSEAU BINANCE — binance_errors_2".to_string(),
+            "BUDGET RÉSEAU BINANCE — 2 requête(s) REST en échec sur 80 appels (fenêtre ~60 s) — audit toute la stack (pas seulement cette app)".to_string(),
         ];
         let mut warnings = vec![
             "CONNECTIVITÉ DÉGRADÉE — REST signé : no credentials".to_string(),
