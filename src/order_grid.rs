@@ -31,6 +31,14 @@ fn open_order_quote_amt(order: &OpenOrder) -> f64 {
     }
 }
 
+fn order_fee_amt(fee: f64, commission: f64) -> f64 {
+    if fee > 0.0 {
+        fee
+    } else {
+        commission
+    }
+}
+
 fn executed_order_quote_amt(order: &ExecutedOrder) -> f64 {
     if order.cum_quote_qty > 0.0 {
         return order.cum_quote_qty;
@@ -121,6 +129,14 @@ pub fn open_order_grid_row_for_columns(
     if column_needed(visible, sort_column, "quote_amt") {
         cells.quote_amt = grid_quote_notional(statics, venue, symbol, quote_amt);
     }
+    let fee_amt = order_fee_amt(order.fee, order.commission);
+    if column_needed(visible, sort_column, "fee") {
+        cells.fee = if fee_amt > 0.0 {
+            grid_quote_notional(statics, venue, symbol, fee_amt)
+        } else {
+            "-".into()
+        };
+    }
     if column_needed(visible, sort_column, "orig_qty") {
         cells.orig_qty = grid_qty(statics, venue, symbol, order.orig_qty);
     }
@@ -142,6 +158,7 @@ pub fn open_order_grid_row_for_columns(
         avg_px: order.display_price(),
         exec_qty: order.executed_qty,
         quote_amt,
+        fee: fee_amt,
         orig_qty: order.orig_qty,
         rem_qty: rem,
         stop_px: order.stop_price,
@@ -227,6 +244,14 @@ pub fn executed_order_grid_row_for_columns(
     if column_needed(visible, sort_column, "quote_amt") {
         cells.quote_amt = grid_quote_notional(statics, venue, symbol, quote_amt);
     }
+    let fee_amt = order_fee_amt(order.fee, order.commission);
+    if column_needed(visible, sort_column, "fee") {
+        cells.fee = if fee_amt > 0.0 {
+            grid_quote_notional(statics, venue, symbol, fee_amt)
+        } else {
+            "-".into()
+        };
+    }
     if column_needed(visible, sort_column, "orig_qty") {
         cells.orig_qty = grid_qty(statics, venue, symbol, order.orig_qty);
     }
@@ -248,6 +273,7 @@ pub fn executed_order_grid_row_for_columns(
         avg_px: order.display_price(),
         exec_qty: order.executed_qty,
         quote_amt,
+        fee: fee_amt,
         orig_qty: order.orig_qty,
         rem_qty: rem,
         stop_px: order.stop_price,
