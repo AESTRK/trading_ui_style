@@ -322,9 +322,29 @@ fn is_connectivity_hub_fragment(text: &str) -> bool {
         || u.contains("CREDENTIALS FOR PROBE")
 }
 
+fn is_venue_budget_fragment(text: &str) -> bool {
+    let u = text.to_uppercase();
+    u.contains("BUDGET RÉSEAU BINANCE")
+        || u.contains("BUDGET RÉSEAU COINBASE")
+        || u.contains("BUDGET RÉSEAU OKX")
+        || u.contains("BUDGET RÉSEAU KRAKEN")
+        || u.contains("BUDGET RESEAU BINANCE")
+        || u.contains("BUDGET RESEAU COINBASE")
+        || u.contains("BUDGET RESEAU OKX")
+        || u.contains("BUDGET RESEAU KRAKEN")
+}
+
 fn merge_connectivity_hub_fragments(errors: &mut Vec<String>, warnings: &mut Vec<String>) {
     let total = errors.len() + warnings.len();
     if total < 2 {
+        return;
+    }
+    let budget_count = errors
+        .iter()
+        .chain(warnings.iter())
+        .filter(|s| is_venue_budget_fragment(s))
+        .count();
+    if budget_count > 1 {
         return;
     }
     let all_hub = errors.iter().all(|s| is_connectivity_hub_fragment(s))

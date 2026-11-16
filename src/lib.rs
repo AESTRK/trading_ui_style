@@ -12,6 +12,7 @@ pub mod order_grid;
 pub mod orders_table;
 pub mod stack_panel;
 pub mod toolbar;
+pub mod workspace_tabs;
 
 pub mod widgets;
 
@@ -19,6 +20,11 @@ pub use stack_panel::{show_feed_status_strip_panel, show_stack_aux_top_panel, sh
 pub use toolbar::{
     show_app_toolbar, toolbar_font, toolbar_readonly_chip, toolbar_row_caption, toolbar_row_status,
     toolbar_separator,
+};
+
+pub use workspace_tabs::{
+    show_workspace_tab_strip, show_workspace_tab_strip_in_toolbar, workspace_tab_style_for_toolbar,
+    workspace_tab_style_from_ui, WorkspaceTab, WorkspaceTabStyle,
 };
 
 pub use widgets::{checkbox, checkbox_readonly, checkbox_row, selection_button, side_toggle_button, SideAccent};
