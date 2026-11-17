@@ -318,6 +318,8 @@ fn is_connectivity_hub_fragment(text: &str) -> bool {
         || u.contains("CONNECTIVITY HUB")
         || u.contains("BUDGET RÉSEAU")
         || u.contains("BUDGET RESEAU")
+        || u.contains("MARGE RÉSEAU")
+        || u.contains("MARGE RESEAU")
         || u.contains("NO CREDENTIALS")
         || u.contains("CREDENTIALS FOR PROBE")
 }
@@ -332,6 +334,10 @@ fn is_venue_budget_fragment(text: &str) -> bool {
         || u.contains("BUDGET RESEAU COINBASE")
         || u.contains("BUDGET RESEAU OKX")
         || u.contains("BUDGET RESEAU KRAKEN")
+        || u.contains("MARGE RÉSEAU BINANCE")
+        || u.contains("MARGE RÉSEAU COINBASE")
+        || u.contains("MARGE RÉSEAU OKX")
+        || u.contains("MARGE RÉSEAU KRAKEN")
 }
 
 fn merge_connectivity_hub_fragments(errors: &mut Vec<String>, warnings: &mut Vec<String>) {
@@ -375,6 +381,8 @@ pub fn classify_issue_severity(text: &str) -> IssueSeverity {
         "WS SANS DONNEES",
         "ATTENTE CARNET",
         "ORDER_BLOCKED",
+        "MARGE RÉSEAU",
+        "MARGE RESEAU",
         "WS_TRADING_OFF",
         "_SNAPSHOT_EMPTY",
         "REFERENCE_SNAPSHOT_EMPTY",
@@ -411,6 +419,8 @@ pub fn classify_issue_severity(text: &str) -> IssueSeverity {
         "STATICS",
         "INSTRUMENT_MAP",
         "CONNECTIVITY",
+        "BUDGET RÉSEAU",
+        "HTTP 429",
         "IGNORÉ",
         "IGNORED",
         "DOWN",
