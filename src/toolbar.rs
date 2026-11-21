@@ -21,12 +21,23 @@ pub fn toolbar_separator(ui: &mut egui::Ui) {
     );
 }
 
-/// Panneau top compact : ouvre Config Manager sur cette app, puis contenu app.
+/// Panneau top compact : Config Manager, menu **Export**, puis contenu app.
 pub fn show_app_toolbar<R>(
     ctx: &egui::Context,
     crate_app_id: &str,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> R {
+    show_app_toolbar_ex(ctx, crate_app_id, None, add_contents)
+}
+
+/// Comme [`show_app_toolbar`] avec export métier **CSV/Excel** (`ExportToolbarHook::spreadsheet`).
+pub fn show_app_toolbar_ex<R>(
+    ctx: &egui::Context,
+    crate_app_id: &str,
+    export: Option<&crate::stack_export_menu::ExportToolbarHook>,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> R {
+    crate::stack_export_menu::poll_stack_export_menu(ctx, crate_app_id);
     let mut out = None;
     let panel_id = egui::Id::new(("app_toolbar_v2", crate_app_id));
     egui::TopBottomPanel::top(panel_id)
@@ -42,12 +53,13 @@ pub fn show_app_toolbar<R>(
                     ui.spacing_mut().item_spacing = egui::vec2(8.0, 4.0);
                     config_manager_toolbar_button(ui, crate_app_id);
                     toolbar_separator(ui);
+                    if crate::stack_export_menu::draw_export_menu(ui, ctx, crate_app_id, export) {
+                        toolbar_separator(ui);
+                    }
                     add_contents(ui)
                 })
                 .inner,
             );
-            // Pas de fill_top_panel_remainder ici : avec max_height, available_height peut
-            // couvrir toute la fenêtre → bande grise/blanche géante sous la toolbar.
         });
     out.expect("toolbar panel")
 }

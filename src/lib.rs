@@ -10,6 +10,7 @@ pub mod launcher;
 pub mod order_amount_format;
 pub mod order_grid;
 pub mod orders_table;
+pub mod stack_export_menu;
 pub mod stack_panel;
 pub mod toolbar;
 pub mod workspace_tabs;
@@ -17,9 +18,13 @@ pub mod workspace_tabs;
 pub mod widgets;
 
 pub use stack_panel::{show_feed_status_strip_panel, show_stack_aux_top_panel, show_stack_strip_panel};
+pub use stack_export_menu::{
+    draw_export_menu, if_spreadsheet_export_triggered, poll_stack_export_menu,
+    spreadsheet_export_hook, take_spreadsheet_export_trigger, ExportToolbarHook, SpreadsheetExport,
+};
 pub use toolbar::{
-    show_app_toolbar, toolbar_font, toolbar_readonly_chip, toolbar_row_caption, toolbar_row_status,
-    toolbar_separator,
+    show_app_toolbar, show_app_toolbar_ex, toolbar_font, toolbar_readonly_chip, toolbar_row_caption,
+    toolbar_row_status, toolbar_separator,
 };
 
 pub use workspace_tabs::{

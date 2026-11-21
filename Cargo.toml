@@ -14,6 +14,8 @@ app_runtime = { path = "../app_runtime" }
 trading_models = { path = "../trading_models" }
 reference_client = { path = "../reference_client" }
 serde_json = "1"
+rfd = "0.15"
+chrono = "0.4"
 eframe = { version = "0.31", optional = true, default-features = true }
 winit = { version = "0.30", optional = true, default-features = true }
 libc = { version = "0.2", optional = true }
