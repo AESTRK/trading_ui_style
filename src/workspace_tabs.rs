@@ -99,7 +99,7 @@ pub fn show_workspace_tab_strip<'a>(
                 let y = if style.in_toolbar {
                     r.bottom() - 1.0
                 } else {
-                    r.bottom() + 3.0
+                    r.bottom() + 5.0
                 };
                 ui.painter().hline(
                     r.left() + 2.0..=r.right() - 2.0,
@@ -109,7 +109,18 @@ pub fn show_workspace_tab_strip<'a>(
             }
         }
     });
+    if !style.in_toolbar {
+        // Le souligné est peint hors du `rect` du label — réserver l’air avant le séparateur.
+        ui.add_space(4.0);
+    }
     picked
+}
+
+/// Espace + séparateur sous une bande d’onglets (panneau central — rythme Orders / Manual Orders).
+pub fn workspace_tab_strip_trailer(ui: &mut Ui) {
+    ui.add_space(4.0);
+    ui.separator();
+    ui.add_space(4.0);
 }
 
 /// Bande d’onglets dans la toolbar app (hauteur standard).

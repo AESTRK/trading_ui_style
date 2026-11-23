@@ -35,8 +35,8 @@ pub use toolbar::{
 };
 
 pub use workspace_tabs::{
-    show_workspace_tab_strip, show_workspace_tab_strip_in_toolbar, workspace_tab_style_for_toolbar,
-    workspace_tab_style_from_ui, WorkspaceTab, WorkspaceTabStyle,
+    show_workspace_tab_strip, show_workspace_tab_strip_in_toolbar, workspace_tab_strip_trailer,
+    workspace_tab_style_for_toolbar, workspace_tab_style_from_ui, WorkspaceTab, WorkspaceTabStyle,
 };
 
 pub use widgets::{checkbox, checkbox_readonly, checkbox_row, selection_button, side_toggle_button, SideAccent};

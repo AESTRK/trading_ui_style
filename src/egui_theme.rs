@@ -7,7 +7,13 @@ use crate::{palette, Rgb, ThemeMode, TradingPalette};
 /// Espacement standard stack (publishers + executor).
 pub const ITEM_SPACING: egui::Vec2 = egui::vec2(6.0, 4.0);
 pub const BUTTON_PADDING: egui::Vec2 = egui::vec2(8.0, 4.0);
-pub const CONTENT_INNER_MARGIN: egui::Margin = egui::Margin::same(4);
+/// Marge panneau central — `top` un peu plus large pour respirer sous la toolbar.
+pub const CONTENT_INNER_MARGIN: egui::Margin = egui::Margin {
+    top: 8,
+    left: 4,
+    right: 4,
+    bottom: 4,
+};
 
 const THEME_UNKNOWN: u8 = 0;
 const THEME_LIGHT: u8 = 1;
