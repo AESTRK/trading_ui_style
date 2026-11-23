@@ -29,8 +29,9 @@ pub use stack_refresh_menu::{
 };
 pub use toolbar::{
     apply_toolbar_row_style, show_app_toolbar, show_app_toolbar_ex, show_app_toolbar_with_refresh,
-    toolbar_font, toolbar_menu_button, toolbar_readonly_chip, toolbar_row_caption,
-    toolbar_row_status, toolbar_selectable_label, toolbar_separator, toolbar_text_button,
+    toolbar_before_app_content, toolbar_font, toolbar_menu_button, toolbar_menu_button_label,
+    toolbar_readonly_chip, toolbar_row_caption, toolbar_row_status, toolbar_selectable_label,
+    toolbar_separator, toolbar_text_button,
 };
 
 pub use workspace_tabs::{

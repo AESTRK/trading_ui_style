@@ -64,29 +64,35 @@ pub fn show_app_toolbar_ex<R>(
         .max_height(TOOLBAR_PANEL_MAX_HEIGHT)
         .show(ctx, |ui| {
             crate::egui_theme::paint_top_stack_panel_bg(ui);
+            let lane_h = TOOLBAR_CONTROL_HEIGHT + 6.0;
             out = Some(
-                ui.horizontal_wrapped(|ui| {
-                    apply_toolbar_row_style(ui);
-                    config_manager_toolbar_button(ui, crate_app_id);
-                    toolbar_separator(ui);
-                    let export_shown = crate::stack_export_menu::draw_export_menu(
-                        ui,
-                        ctx,
-                        crate_app_id,
-                        export,
-                    );
-                    let refresh_shown = crate::stack_refresh_menu::draw_refresh_menu(
-                        ui,
-                        ctx,
-                        crate_app_id,
-                        refresh,
-                    );
-                    if export_shown && refresh_shown {
-                        toolbar_separator(ui);
-                    }
-                    add_contents(ui)
-                })
-                .inner,
+                egui::ScrollArea::horizontal()
+                    .id_salt(("app_toolbar_lane", crate_app_id))
+                    .drag_to_scroll(true)
+                    .max_height(lane_h)
+                    .show(ui, |ui| {
+                        ui.set_max_height(lane_h);
+                        ui.horizontal(|ui| {
+                            apply_toolbar_row_style(ui);
+                            config_manager_toolbar_button(ui, crate_app_id);
+                            let export_shown = crate::stack_export_menu::draw_export_menu(
+                                ui,
+                                ctx,
+                                crate_app_id,
+                                export,
+                            );
+                            let _refresh_shown = crate::stack_refresh_menu::draw_refresh_menu(
+                                ui,
+                                ctx,
+                                crate_app_id,
+                                refresh,
+                            );
+                            let _ = export_shown;
+                            add_contents(ui)
+                        })
+                        .inner
+                    })
+                    .inner,
             );
         });
     out.expect("toolbar panel")
@@ -176,17 +182,24 @@ pub fn toolbar_selectable_label(
     .inner
 }
 
-/// Déclencheur **menu** : fond transparent + contour fin (Config Manager = bouton plein rempli).
+/// Libellé menu toolbar — même gabarit que Config Manager + indicateur déroulant.
+pub fn toolbar_menu_button_label(label: &str) -> String {
+    format!("{label}  ▾")
+}
+
+/// Menu déroulant toolbar — même style bouton que [`config_manager_toolbar_button`].
 pub fn toolbar_menu_button<R>(
     ui: &mut egui::Ui,
     label: &str,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<Option<R>> {
-    let stroke = Stroke::new(1.0_f32, ui.visuals().widgets.inactive.bg_stroke.color);
-    let button = egui::Button::new(RichText::new(label).font(toolbar_font()))
-        .fill(egui::Color32::TRANSPARENT)
-        .stroke(stroke)
-        .corner_radius(4.0)
-        .min_size(egui::vec2(0.0, TOOLBAR_CONTROL_HEIGHT));
+    let button = config_window::toolbar_styled_button(
+        RichText::new(toolbar_menu_button_label(label)).font(toolbar_font()),
+    );
     egui::menu::menu_custom_button(ui, button, add_contents)
+}
+
+/// Séparateur avant le contenu métier app (onglets, filtres…) — pas entre boutons stack.
+pub fn toolbar_before_app_content(ui: &mut egui::Ui) {
+    toolbar_separator(ui);
 }
