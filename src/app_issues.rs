@@ -12,6 +12,8 @@ pub const DEFAULT_MAX_BANNER_ISSUES: usize = 6;
 pub const DEFAULT_WARNING_BANNER_TITLE: &str = "AVERTISSEMENT";
 /// Durée du message **RESOLU : alerte …** après disparition des erreurs (secondes).
 pub const DEFAULT_RESOLVED_BANNER_SECS: f64 = 10.0;
+/// Erreur affichée au moins ce délai avant un flash vert « RÉSOLU » (évite scintillement boot / retry).
+pub const MIN_ERROR_VISIBLE_BEFORE_RESOLVED: Duration = Duration::from_millis(900);
 pub const DEFAULT_RESOLVED_BANNER_DETAIL: &str = "Le problème signalé est corrigé.";
 
 /// Journal opérationnel par application (`ORDERBOOK`, `MANUAL_ORDERS`, …).
@@ -164,6 +166,7 @@ pub struct IssueBannerController {
     resolved_until: Option<Instant>,
     /// Dernier texte bandeau (erreurs / avertissements) avant disparition → détail « RESOLU ».
     last_active_banner_text: String,
+    error_visible_since: Option<Instant>,
 }
 
 impl IssueBannerController {
@@ -214,9 +217,18 @@ impl IssueBannerController {
         if issues_active {
             self.resolved_until = None;
             self.last_active_banner_text = format_board_issues(board);
+            if board.has_errors() && self.error_visible_since.is_none() {
+                self.error_visible_since = Some(Instant::now());
+            }
         } else if self.had_active_issues {
-            self.resolved_until =
-                Some(Instant::now() + Duration::from_secs_f64(DEFAULT_RESOLVED_BANNER_SECS));
+            let visible_long_enough = self
+                .error_visible_since
+                .is_some_and(|s| s.elapsed() >= MIN_ERROR_VISIBLE_BEFORE_RESOLVED);
+            if visible_long_enough {
+                self.resolved_until =
+                    Some(Instant::now() + Duration::from_secs_f64(DEFAULT_RESOLVED_BANNER_SECS));
+            }
+            self.error_visible_since = None;
         }
         self.had_active_issues = issues_active;
         if let Some(until) = self.resolved_until {
@@ -415,6 +427,8 @@ mod tests {
         let mut board = StackIssueBoard::new();
         board.push_error("Binance indisponible");
         ctrl.on_board(&board);
+        ctrl.error_visible_since =
+            Some(Instant::now() - MIN_ERROR_VISIBLE_BEFORE_RESOLVED - Duration::from_millis(1));
         assert!(!ctrl.showing_resolved());
 
         board = StackIssueBoard::new();
@@ -422,6 +436,17 @@ mod tests {
         assert!(ctrl.showing_resolved());
 
         board.push_error("retour en erreur");
+        ctrl.on_board(&board);
+        assert!(!ctrl.showing_resolved());
+    }
+
+    #[test]
+    fn issue_banner_skips_resolved_flash_after_brief_error() {
+        let mut ctrl = IssueBannerController::default();
+        let mut board = StackIssueBoard::new();
+        board.push_error("hub KO");
+        ctrl.on_board(&board);
+        board = StackIssueBoard::new();
         ctrl.on_board(&board);
         assert!(!ctrl.showing_resolved());
     }

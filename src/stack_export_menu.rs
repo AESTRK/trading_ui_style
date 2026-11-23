@@ -11,6 +11,8 @@ use app_runtime::export_db::{
 };
 use egui::{self, mutex::Mutex, Context};
 
+use crate::toolbar::toolbar_menu_button;
+
 #[derive(Clone)]
 struct StackExportMenuHandle(Arc<Mutex<StackExportMenuPersist>>);
 
@@ -147,7 +149,7 @@ pub fn draw_export_menu(
     };
     let has_spreadsheet = hook.and_then(|h| h.spreadsheet).is_some();
     let sheet = hook.and_then(|h| h.spreadsheet);
-    ui.menu_button(menu_label, |ui| {
+    toolbar_menu_button(ui, menu_label, |ui| {
         if let Some(sheet) = sheet {
             let label = if sheet.busy {
                 "Export CSV/Excel…"

@@ -140,15 +140,18 @@ pub fn open_config_manager_for_crate(crate_app_id: &str) {
     open_config_manager(&resolve_persist_app_id(crate_app_id));
 }
 
+/// Bouton / menu toolbar — hauteur et rayon alignés (`Config Manager`, Export, Rafraîchir).
+pub fn toolbar_styled_button(label: RichText) -> egui::Button<'static> {
+    egui::Button::new(label)
+        .corner_radius(4.0)
+        .min_size(egui::vec2(0.0, TOOLBAR_CONTROL_HEIGHT))
+}
+
 /// Bouton toolbar : ouvre Config Manager sur la section persist de cette app.
 pub fn config_manager_toolbar_button(ui: &mut egui::Ui, crate_app_id: &str) -> bool {
-    let response = ui.add(
-        egui::Button::new(
-            RichText::new(MENU_CONFIG_LABEL).font(FontId::proportional(TEXT_SIZES.toolbar)),
-        )
-        .corner_radius(4.0)
-        .min_size(egui::vec2(0.0, TOOLBAR_CONTROL_HEIGHT)),
-    );
+    let response = ui.add(toolbar_styled_button(
+        RichText::new(MENU_CONFIG_LABEL).font(FontId::proportional(TEXT_SIZES.toolbar)),
+    ));
     if response.clicked() {
         open_config_manager_for_crate(crate_app_id);
         true

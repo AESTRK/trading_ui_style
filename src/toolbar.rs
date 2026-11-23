@@ -2,7 +2,7 @@
 
 use eframe::egui::{self, FontId, RichText, Stroke};
 
-use crate::config_window::{config_manager_toolbar_button, TOOLBAR_CONTROL_HEIGHT};
+use crate::config_window::{self, config_manager_toolbar_button, TOOLBAR_CONTROL_HEIGHT};
 use crate::TEXT_SIZES;
 
 /// Hauteur max du panneau toolbar (wrap ~2 lignes status + onglets).
@@ -27,7 +27,17 @@ pub fn show_app_toolbar<R>(
     crate_app_id: &str,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> R {
-    show_app_toolbar_ex(ctx, crate_app_id, None, add_contents)
+    show_app_toolbar_ex(ctx, crate_app_id, None, None, add_contents)
+}
+
+/// Toolbar avec menu **Rafraîchir** uniquement.
+pub fn show_app_toolbar_with_refresh<R>(
+    ctx: &egui::Context,
+    crate_app_id: &str,
+    refresh: Option<&crate::stack_refresh_menu::RefreshToolbarHook>,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> R {
+    show_app_toolbar_ex(ctx, crate_app_id, None, refresh, add_contents)
 }
 
 /// Comme [`show_app_toolbar`] avec export métier **CSV/Excel** (`ExportToolbarHook::spreadsheet`).
@@ -35,6 +45,7 @@ pub fn show_app_toolbar_ex<R>(
     ctx: &egui::Context,
     crate_app_id: &str,
     export: Option<&crate::stack_export_menu::ExportToolbarHook>,
+    refresh: Option<&crate::stack_refresh_menu::RefreshToolbarHook>,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> R {
     crate::stack_export_menu::poll_stack_export_menu(ctx, crate_app_id);
@@ -50,12 +61,17 @@ pub fn show_app_toolbar_ex<R>(
             ui.set_max_height(TOOLBAR_PANEL_MAX_HEIGHT);
             out = Some(
                 ui.horizontal_wrapped(|ui| {
-                    ui.spacing_mut().item_spacing = egui::vec2(8.0, 4.0);
+                    apply_toolbar_row_style(ui);
                     config_manager_toolbar_button(ui, crate_app_id);
                     toolbar_separator(ui);
-                    if crate::stack_export_menu::draw_export_menu(ui, ctx, crate_app_id, export) {
+                    let export_shown =
+                        crate::stack_export_menu::draw_export_menu(ui, ctx, crate_app_id, export);
+                    let refresh_shown =
+                        crate::stack_refresh_menu::draw_refresh_menu(ui, ctx, crate_app_id, refresh);
+                    if export_shown && refresh_shown {
                         toolbar_separator(ui);
                     }
+                    // Pas de séparateur après le dernier contrôle stack — évite double barre avec le contenu app.
                     add_contents(ui)
                 })
                 .inner,
@@ -116,4 +132,44 @@ pub fn toolbar_row_status(
 /// Police toolbar standard (12 px proportional).
 pub fn toolbar_font() -> FontId {
     FontId::proportional(TEXT_SIZES.toolbar)
+}
+
+/// Hauteur d’interaction uniforme pour la ligne toolbar (boutons, menus, onglets).
+pub fn apply_toolbar_row_style(ui: &mut egui::Ui) {
+    ui.spacing_mut().item_spacing = egui::vec2(8.0, 4.0);
+    let h = TOOLBAR_CONTROL_HEIGHT;
+    let is = &mut ui.spacing_mut().interact_size;
+    is.y = is.y.max(h);
+}
+
+/// Bouton texte toolbar (ex. « Limites API », OK chartboard).
+pub fn toolbar_text_button(ui: &mut egui::Ui, label: &str) -> egui::Response {
+    ui.add(config_window::toolbar_styled_button(
+        RichText::new(label).font(toolbar_font()),
+    ))
+}
+
+/// `selectable_label` centré sur la hauteur toolbar.
+pub fn toolbar_selectable_label(
+    ui: &mut egui::Ui,
+    selected: bool,
+    text: impl Into<RichText>,
+) -> egui::Response {
+    let text = text.into();
+    ui.allocate_ui_with_layout(
+        egui::vec2(0.0, TOOLBAR_CONTROL_HEIGHT),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| ui.selectable_label(selected, text),
+    )
+    .inner
+}
+
+/// Menu déroulant toolbar — même gabarit que [`config_manager_toolbar_button`].
+pub fn toolbar_menu_button<R>(
+    ui: &mut egui::Ui,
+    label: &str,
+    add_contents: impl FnOnce(&mut egui::Ui) -> R,
+) -> egui::InnerResponse<Option<R>> {
+    let button = config_window::toolbar_styled_button(RichText::new(label).font(toolbar_font()));
+    egui::menu::menu_custom_button(ui, button, add_contents)
 }
