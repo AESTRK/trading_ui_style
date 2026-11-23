@@ -214,10 +214,9 @@ pub fn draw_refresh_menu(
             if !slot.visible {
                 return;
             }
-            let mut resp = ui.add_enabled(
-                slot.enabled && !slot.busy,
-                egui::Button::new(label),
-            );
+            let mut resp = ui.add_enabled_ui(slot.enabled && !slot.busy, |ui| {
+                ui.selectable_label(false, label)
+            }).inner;
             if let Some(tip) = slot.tooltip {
                 resp = resp.on_hover_text(tip);
             }

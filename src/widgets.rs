@@ -108,20 +108,30 @@ pub fn draw_pending_ring(ui: &Ui, rect: Rect, stroke_color: Color32) {
     );
 }
 
-fn paint_checkbox(ui: &Ui, rect: Rect, checked: bool, enabled: bool) {
+fn paint_checkbox(ui: &Ui, rect: Rect, checked: bool, enabled: bool, highlight: bool) {
     let box_rect = rect.shrink(3.0);
+    let mode = if ui.visuals().dark_mode {
+        ThemeMode::Dark
+    } else {
+        ThemeMode::Light
+    };
+    let p = palette(mode);
     let stroke_color = if enabled {
         widget_stroke(ui, 1.0).color
     } else {
         ui.visuals().weak_text_color()
     };
-    ui.painter().rect(
-        box_rect,
-        2.0,
-        Color32::TRANSPARENT,
-        Stroke::new(1.0_f32, stroke_color),
-        egui::StrokeKind::Inside,
-    );
+    let fill = if checked {
+        color(p.selection_bg).gamma_multiply(if ui.visuals().dark_mode { 0.55 } else { 0.35 })
+    } else {
+        Color32::TRANSPARENT
+    };
+    let border = if highlight {
+        Stroke::new(1.5_f32, color(p.selection_stroke))
+    } else {
+        Stroke::new(1.0_f32, stroke_color)
+    };
+    ui.painter().rect(box_rect, 2.0, fill, border, egui::StrokeKind::Inside);
     if checked {
         let mark_color = if enabled {
             color(BUY_GREEN)
@@ -136,7 +146,8 @@ fn paint_checkbox(ui: &Ui, rect: Rect, checked: bool, enabled: bool) {
 pub fn checkbox(ui: &mut Ui, checked: &mut bool) -> Response {
     let desired = Vec2::new(18.0, 18.0);
     let (rect, mut response) = ui.allocate_exact_size(desired, Sense::click());
-    paint_checkbox(ui, rect, *checked, ui.is_enabled());
+    let highlight = ui.is_enabled() && (response.hovered() || response.has_focus());
+    paint_checkbox(ui, rect, *checked, ui.is_enabled(), highlight);
     if response.clicked() && ui.is_enabled() {
         *checked = !*checked;
         response.mark_changed();
@@ -151,7 +162,7 @@ pub fn checkbox(ui: &mut Ui, checked: &mut bool) -> Response {
 pub fn checkbox_readonly(ui: &mut Ui, checked: bool) -> Response {
     let desired = Vec2::new(18.0, 18.0);
     let (rect, response) = ui.allocate_exact_size(desired, Sense::hover());
-    paint_checkbox(ui, rect, checked, false);
+    paint_checkbox(ui, rect, checked, false, false);
     response
 }
 

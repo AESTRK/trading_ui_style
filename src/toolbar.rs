@@ -7,6 +7,7 @@ use crate::TEXT_SIZES;
 
 /// Hauteur max du panneau toolbar (wrap ~2 lignes status + onglets).
 /// Au-delà, egui réserve mal la hauteur → bande noire (viewport) sous la toolbar.
+/// ~2 lignes si le contenu app reste dans la toolbar (préférer bandeau aux / header pour le métier lourd).
 const TOOLBAR_PANEL_MAX_HEIGHT: f32 = 72.0;
 
 /// Séparateur vertical compact — ne pas utiliser `ui.separator()` dans la toolbar horizontale.
