@@ -82,7 +82,8 @@ pub fn visuals_from_palette(mode: ThemeMode, trading: TradingPalette) -> egui::V
     visuals.widgets.inactive.bg_stroke = widget_border;
     visuals.widgets.hovered.bg_stroke = widget_border_strong;
     visuals.widgets.active.bg_stroke = widget_border_strong;
-    visuals.widgets.open.bg_stroke = widget_border_strong;
+    // Contour menu ouvert = même que inactif (évite effet « parenthèses » si clip vertical).
+    visuals.widgets.open.bg_stroke = widget_border;
     // fg_stroke requis pour coches, flèches ComboBox, etc. — ne pas mettre à NONE.
     visuals.widgets.noninteractive.fg_stroke = widget_fg;
     visuals.widgets.inactive.fg_stroke = widget_fg;

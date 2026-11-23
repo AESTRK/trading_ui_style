@@ -9,6 +9,8 @@ use crate::TEXT_SIZES;
 /// Au-delà, egui réserve mal la hauteur → bande noire (viewport) sous la toolbar.
 /// ~2 lignes si le contenu app reste dans la toolbar (préférer bandeau aux / header pour le métier lourd).
 const TOOLBAR_PANEL_MAX_HEIGHT: f32 = 72.0;
+/// Marge toolbar (compacte).
+const TOOLBAR_PANEL_INNER_MARGIN: i8 = 2;
 
 /// Séparateur vertical compact — ne pas utiliser `ui.separator()` dans la toolbar horizontale.
 pub fn toolbar_separator(ui: &mut egui::Ui) {
@@ -52,27 +54,36 @@ pub fn show_app_toolbar_ex<R>(
     crate::stack_export_menu::poll_stack_export_menu(ctx, crate_app_id);
     let mut out = None;
     let panel_id = egui::Id::new(("app_toolbar_v2", crate_app_id));
+    let toolbar_frame = crate::egui_theme::stack_top_panel_frame(ctx).inner_margin(
+        egui::Margin::symmetric(4, TOOLBAR_PANEL_INNER_MARGIN),
+    );
     egui::TopBottomPanel::top(panel_id)
         .resizable(false)
         .show_separator_line(false)
-        .frame(crate::egui_theme::stack_top_panel_frame(ctx))
+        .frame(toolbar_frame)
         .max_height(TOOLBAR_PANEL_MAX_HEIGHT)
         .show(ctx, |ui| {
             crate::egui_theme::paint_top_stack_panel_bg(ui);
-            ui.set_max_height(TOOLBAR_PANEL_MAX_HEIGHT);
             out = Some(
                 ui.horizontal_wrapped(|ui| {
                     apply_toolbar_row_style(ui);
                     config_manager_toolbar_button(ui, crate_app_id);
                     toolbar_separator(ui);
-                    let export_shown =
-                        crate::stack_export_menu::draw_export_menu(ui, ctx, crate_app_id, export);
-                    let refresh_shown =
-                        crate::stack_refresh_menu::draw_refresh_menu(ui, ctx, crate_app_id, refresh);
+                    let export_shown = crate::stack_export_menu::draw_export_menu(
+                        ui,
+                        ctx,
+                        crate_app_id,
+                        export,
+                    );
+                    let refresh_shown = crate::stack_refresh_menu::draw_refresh_menu(
+                        ui,
+                        ctx,
+                        crate_app_id,
+                        refresh,
+                    );
                     if export_shown && refresh_shown {
                         toolbar_separator(ui);
                     }
-                    // Pas de séparateur après le dernier contrôle stack — évite double barre avec le contenu app.
                     add_contents(ui)
                 })
                 .inner,
@@ -165,12 +176,17 @@ pub fn toolbar_selectable_label(
     .inner
 }
 
-/// Menu déroulant toolbar — même gabarit que [`config_manager_toolbar_button`].
+/// Déclencheur **menu** : fond transparent + contour fin (Config Manager = bouton plein rempli).
 pub fn toolbar_menu_button<R>(
     ui: &mut egui::Ui,
     label: &str,
     add_contents: impl FnOnce(&mut egui::Ui) -> R,
 ) -> egui::InnerResponse<Option<R>> {
-    let button = config_window::toolbar_styled_button(RichText::new(label).font(toolbar_font()));
+    let stroke = Stroke::new(1.0_f32, ui.visuals().widgets.inactive.bg_stroke.color);
+    let button = egui::Button::new(RichText::new(label).font(toolbar_font()))
+        .fill(egui::Color32::TRANSPARENT)
+        .stroke(stroke)
+        .corner_radius(4.0)
+        .min_size(egui::vec2(0.0, TOOLBAR_CONTROL_HEIGHT));
     egui::menu::menu_custom_button(ui, button, add_contents)
 }
