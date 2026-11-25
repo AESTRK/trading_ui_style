@@ -6,8 +6,9 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use app_runtime::export_db::{
-    default_import_browse_dir, run_cache_export, run_cache_import, suggest_archive_path,
-    target_for_app, CacheTarget, DbJobOutcome,
+    default_import_browse_dir, format_bytes_human, new_sink, run_cache_export_with_progress,
+    run_cache_import, suggest_archive_path, target_for_app, CacheTarget, DbExportProgress,
+    DbJobOutcome, ExportProgressSink,
 };
 use egui::{self, mutex::Mutex, Context};
 
@@ -28,6 +29,7 @@ struct StackExportMenuPersist {
     busy: bool,
     notice: Option<String>,
     job_rx: Option<mpsc::Receiver<DbJobOutcome>>,
+    db_export_progress: Option<ExportProgressSink>,
     import_ack: Option<ImportAckWatch>,
     backup_before_import: bool,
     restart_after_import: bool,
@@ -184,7 +186,13 @@ pub fn draw_export_menu(
 fn start_db_export(ctx: &Context, app_id: &str, target: CacheTarget) {
     let out = suggest_archive_path(&target);
     let root = app_runtime::export_db::cache_root_for(&target);
-    spawn_db_job(ctx, app_id, move || run_cache_export(target, root, out));
+    let progress = new_sink();
+    with_persist(ctx, app_id, |s| {
+        s.db_export_progress = Some(progress.clone());
+    });
+    spawn_db_job(ctx, app_id, move || {
+        run_cache_export_with_progress(target, root, out, Some(progress))
+    });
 }
 
 fn start_db_import(ctx: &Context, app_id: &str, target: CacheTarget) {
@@ -233,6 +241,7 @@ fn poll_job(state: &mut StackExportMenuPersist, menu_app_id: &str) {
     if let Ok(outcome) = rx.try_recv() {
         state.busy = false;
         state.job_rx = None;
+        state.db_export_progress = None;
         state.notice = Some(outcome.message);
         if let Some(ack) = outcome.import_ack {
             state.import_ack = Some(ImportAckWatch {
@@ -273,8 +282,12 @@ fn poll_import_ack(state: &mut StackExportMenuPersist) {
 }
 
 fn show_notice_window(ctx: &Context, app_id: &str) {
-    let (text, waiting_ack) = with_persist(ctx, app_id, |s| {
-        (s.notice.clone(), s.import_ack.is_some())
+    let (text, waiting_ack, busy, progress) = with_persist(ctx, app_id, |s| {
+        let progress = s
+            .db_export_progress
+            .as_ref()
+            .and_then(|sink| sink.lock().ok().map(|g| g.clone()));
+        (s.notice.clone(), s.import_ack.is_some(), s.busy, progress)
     });
     let Some(text) = text else {
         return;
@@ -285,9 +298,15 @@ fn show_notice_window(ctx: &Context, app_id: &str) {
         .id(win_id)
         .collapsible(false)
         .resizable(true)
-        .default_width(420.0)
+        .default_width(480.0)
         .open(&mut open)
         .show(ctx, |ui| {
+            if busy {
+                if let Some(p) = progress {
+                    paint_db_export_progress(ui, &p);
+                    ui.separator();
+                }
+            }
             ui.label(&text);
             if waiting_ack {
                 ui.horizontal(|ui| {
@@ -298,5 +317,51 @@ fn show_notice_window(ctx: &Context, app_id: &str) {
         });
     if !open {
         with_persist(ctx, app_id, |s| s.notice = None);
+    }
+}
+
+fn paint_db_export_progress(ui: &mut egui::Ui, p: &DbExportProgress) {
+    let phase_label = match p.phase.as_str() {
+        "scan" => "Inventaire du cache",
+        "archive" => "Archivage tar",
+        "finish" => "Finalisation gzip",
+        other => other,
+    };
+    ui.label(phase_label);
+    match p.phase.as_str() {
+        "scan" => {
+            ui.label(format!(
+                "{} fichiers · {}",
+                p.files_done,
+                format_bytes_human(p.bytes_done)
+            ));
+            ui.add(egui::ProgressBar::new(0.0).animate(true));
+        }
+        "archive" => {
+            ui.label(format!(
+                "{} / {} fichiers · {} / {}",
+                p.files_done,
+                p.files_total,
+                format_bytes_human(p.bytes_done),
+                format_bytes_human(p.bytes_total)
+            ));
+            let frac = if p.files_total > 0 {
+                (p.files_done as f32 / p.files_total as f32).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            ui.add(egui::ProgressBar::new(frac).show_percentage());
+        }
+        "finish" => {
+            ui.add(egui::ProgressBar::new(0.0).animate(true));
+        }
+        _ => {}
+    }
+    if !p.current_label.is_empty() {
+        ui.small(
+            egui::RichText::new(&p.current_label)
+                .weak()
+                .monospace(),
+        );
     }
 }
